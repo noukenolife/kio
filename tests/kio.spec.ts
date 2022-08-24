@@ -14,11 +14,16 @@ describe('KIO', () => {
   const autoCommitInterpreter = new AutoCommitInterpreterImpl(client);
 
   it('test', async () => {
-    const test = await KIO
+    const record = {
+      value: { value: 'aaaa' },
+    };
+
+    const result = await KIO
       .instance(autoCommitInterpreter)
-      .getRecordOpt({ tag: 'record1', app: '2', id: '1' })
-      .getRecordOpt({ tag: 'record2', app: '2', id: '9999' })
-      .autoCommit(({ record2 }) => record2);
-    console.log(test);
+      .addRecord({ tag: 'record1', app: '2', record })
+      .getRecordOpt({ tag: 'record2', app: '2', id: '1' })
+      .getRecordOpt({ tag: 'record3', app: '2', id: '9999' })
+      .autoCommit(({ record1 }) => record1);
+    console.log(result);
   });
 });

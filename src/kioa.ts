@@ -1,6 +1,8 @@
 import * as FR from 'fp-ts-contrib/Free';
 import * as O from 'fp-ts/Option';
-import { AppID, ID, Record } from './core';
+import {
+  AppID, ID, Record, Revision,
+} from './core';
 
 export const URI = 'KIOA';
 
@@ -30,8 +32,33 @@ export class GetRecordOpt<A, R extends Record = Record> {
   }
 }
 
+export class AddRecord<A, R extends Record = Record> {
+  readonly _tag: 'AddRecord' = 'AddRecord';
+
+  readonly _A!: A;
+
+  readonly _URI!: URI;
+
+  readonly app: AppID;
+
+  readonly record: R;
+
+  readonly f: (result: O.Option<{ id: ID, revision: Revision }>) => A;
+
+  constructor(args: {
+    app: AppID,
+    record: R,
+    f: (result: O.Option<{ id: ID, revision: Revision }>) => A
+  }) {
+    this.app = args.app;
+    this.record = args.record;
+    this.f = args.f;
+  }
+}
+
 export type KIOA<A> =
-  | GetRecordOpt<A>;
+  | GetRecordOpt<A>
+  | AddRecord<A>;
 
 declare module 'fp-ts/HKT' {
   interface URItoKind<A> {
@@ -43,3 +70,10 @@ export const getRecordOpt = <R extends Record>(args: {
   app: AppID,
   id: ID,
 }) => FR.liftF(new GetRecordOpt<O.Option<R>, R>({ ...args, f: (a) => a }));
+
+export const addRecord = <R extends Record>(args: {
+  app: AppID,
+  record: R,
+}) => FR.liftF(
+    new AddRecord<O.Option<{ id: ID, revision: Revision }>, R>({ ...args, f: (a) => a }),
+  );

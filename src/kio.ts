@@ -2,7 +2,9 @@ import * as FR from 'fp-ts-contrib/Free';
 import * as O from 'fp-ts/Option';
 import * as T from 'fp-ts/Task';
 import { Do } from 'fp-ts-contrib/Do';
-import { AppID, ID, Record } from './core';
+import {
+  AppID, ID, Record, Revision,
+} from './core';
 import { AutoCommitInterpreter } from './interpreter/autoCommitInterpreter';
 import * as K from './kioa';
 
@@ -27,7 +29,7 @@ export class KIO<S extends {}> {
     return new KIO(FR.of({}), autoCommitInterpreter);
   }
 
-  getRecordOpt<T extends string, R extends Record>(args: {
+  getRecordOpt<R extends Record, T extends string = string>(args: {
     tag: T,
     app: AppID,
     id: ID,
@@ -38,6 +40,28 @@ export class KIO<S extends {}> {
       .return(({ state, record }) => ({
         ...state,
         [args.tag]: O.toUndefined(record),
+      }));
+    return new KIO(kio, this.autoCommitInterpreter);
+  }
+
+  addRecord<R extends Record, T extends string = string>(args: {
+    tag: T,
+    app: AppID,
+    record: R,
+  }): KIO<S & KIOState<T, R>> {
+    const kio = Do(FR.free)
+      .bind('state', this.kio)
+      .bind('result', K.addRecord(args))
+      .return(({ state, result }) => ({
+        ...state,
+        [args.tag]: O.foldW(
+          () => args.record,
+          (r: { id: ID, revision: Revision }) => ({
+            ...args.record,
+            $id: { type: '__ID__', value: r.id },
+            $revision: { type: '__REVISION__', value: r.revision },
+          }),
+        )(result),
       }));
     return new KIO(kio, this.autoCommitInterpreter);
   }

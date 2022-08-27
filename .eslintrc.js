@@ -20,6 +20,8 @@ module.exports = {
   ],
   rules: {
     'no-underscore-dangle': 'off',
+    'max-classes-per-file': 'off',
     '@typescript-eslint/no-redeclare': 'off',
+    'import/prefer-default-export': 'off',
   },
 };

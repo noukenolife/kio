@@ -13,9 +13,10 @@ describe('KIO', () => {
   const client = new KintoneClientImpl(underlying);
   const autoCommitInterpreter = new AutoCommitInterpreterImpl(client);
 
-  it('test', async () => {
+  it.skip('test', async () => {
     const record = {
-      value: { value: 'aaaa' },
+      id: { value: '9999' },
+      field1: { value: 'aaaa' },
     };
 
     const result = await KIO
@@ -23,7 +24,8 @@ describe('KIO', () => {
       .addRecord({ tag: 'record1', app: '2', record })
       .getRecordOpt({ tag: 'record2', app: '2', id: '1' })
       .getRecordOpt({ tag: 'record3', app: '2', id: '9999' })
-      .autoCommit(({ record1 }) => record1);
+      .getRecords({ tag: 'records', app: '2' })
+      .autoCommit(({ records }) => records);
     console.log(result);
   });
 });

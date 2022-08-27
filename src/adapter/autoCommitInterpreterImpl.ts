@@ -15,10 +15,16 @@ export class AutoCommitInterpreterImpl implements AutoCommitInterpreter {
   readonly translate = <A>(kioa: KIOA<A>): T.Task<A> => {
     switch (kioa._tag) {
       case 'GetRecordOpt': return Do(T.Monad)
-        .bind('recordOpt', this.client.getRecordOpt({ app: kioa.app, id: kioa.id }))
+        .bind('recordOpt', this.client.getRecordOpt(kioa))
         .return(({ recordOpt }) => kioa.f(recordOpt));
+      case 'GetRecords': return Do(T.Monad)
+        .bind('result', this.client.getRecords(kioa))
+        .return(({ result }) => kioa.f(result.records));
       case 'AddRecord': return Do(T.Monad)
-        .bind('result', this.client.addRecord({ app: kioa.app, record: kioa.record }))
+        .bind('result', this.client.addRecord(kioa))
+        .return(({ result }) => kioa.f(O.some(result)));
+      case 'UpdateRecord': return Do(T.Monad)
+        .bind('result', this.client.updateRecord(kioa))
         .return(({ result }) => kioa.f(O.some(result)));
       default: throw Error('Unknown operation.');
     }

@@ -6,7 +6,9 @@ import {
   anything, instance, mock, when,
 } from 'ts-mockito';
 import { AutoCommitInterpreterImpl } from '../../src/adapter/autoCommitInterpreterImpl';
-import { addRecord, getRecordOpt } from '../../src/kioa';
+import {
+  addRecord, getRecordOpt, getRecords, updateRecordById,
+} from '../../src/kioa';
 import { Record } from '../../src/core';
 import { KintoneClient } from '../../src/client/kintoneClient';
 
@@ -30,6 +32,23 @@ describe('AutoCommitInterpreterImpl', () => {
       // Then
       await expect(result).resolves.toEqual(O.some(record));
     });
+    it('should translate GetRecords to Task', async () => {
+      // Given
+      const expected = [
+        { id: { value: '1' }, field1: { value: 'test1' } },
+        { id: { value: '2' }, field1: { value: 'test2' } },
+        { id: { value: '3' }, field1: { value: 'test3' } },
+      ];
+      const client = mock<KintoneClient>();
+      when(client.getRecords(anything()))
+        .thenReturn(T.of({ records: expected, totalCount: O.some(3) }));
+      const interpreter = new AutoCommitInterpreterImpl(instance(client));
+      // When
+      const kio = getRecords({ app: '1' });
+      const actual = FR.foldFree(T.Monad)(interpreter.translate, kio)();
+      // Then
+      await expect(actual).resolves.toEqual(expected);
+    });
     it('should translate AddRecord to Task', async () => {
       // Given
       const record: TestRecord = {
@@ -43,6 +62,21 @@ describe('AutoCommitInterpreterImpl', () => {
       const result = FR.foldFree(T.Monad)(interpreter.translate, kio)();
       // Then
       await expect(result).resolves.toEqual(O.some({ id: '1', revision: '1' }));
+    });
+    it('should translate UpdateRecord to Task', async () => {
+      // Given
+      const record: TestRecord = {
+        id: { value: '1' },
+        field1: { value: 'test' },
+      };
+      const client = mock<KintoneClient>();
+      when(client.updateRecord(anything())).thenReturn(T.of({ revision: '1' }));
+      const interpreter = new AutoCommitInterpreterImpl(instance(client));
+      // When
+      const kio = updateRecordById({ app: '1', id: '1', record });
+      const result = FR.foldFree(T.Monad)(interpreter.translate, kio)();
+      // Then
+      await expect(result).resolves.toEqual(O.some({ revision: '1' }));
     });
   });
 });

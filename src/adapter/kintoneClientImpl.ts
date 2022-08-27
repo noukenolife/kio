@@ -98,4 +98,11 @@ export class KintoneClientImpl implements KintoneClient {
         totalCount: O.map((count) => Number(count))(O.fromNullable(totalCount)),
       }));
   }
+
+  deleteRecords(args: {
+    app: AppID;
+    records: { id: ID; revision?: Revision }[];
+  }): T.Task<void> {
+    return () => this.client.record.deleteAllRecords(args).then(() => {});
+  }
 }

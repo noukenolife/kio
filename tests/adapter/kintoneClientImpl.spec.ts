@@ -59,113 +59,6 @@ describe('KintoneClientImpl', () => {
     });
   });
 
-  describe('addRecord', () => {
-    it('should add new record', async () => {
-      // Given
-      const expected: TestRecord = {
-        id: { value: '1' },
-        field1: { value: 'test' },
-      };
-      // When
-      const { id } = await client.addRecord({ app: APP_ID, record: expected })();
-      // Then
-      const { record } = await underlying.record.getRecord<TestRecord>({ app: APP_ID, id });
-      expect(record.field1.value).toBe(expected.field1.value);
-    });
-  });
-
-  describe('updateRecord', () => {
-    it('should update record for id', async () => {
-      // Given
-      const record: TestRecord = {
-        id: { value: '1' },
-        field1: { value: 'test' },
-      };
-      const { id } = await underlying.record.addRecord({ app: APP_ID, record });
-      // When
-      const expected: TestRecord = {
-        id: { value: '1' },
-        field1: { value: 'updated' },
-      };
-      await client.updateRecord({ app: APP_ID, id, record: expected })();
-      // Then
-      const { record: actual } = await underlying.record.getRecord<TestRecord>({ app: APP_ID, id });
-      expect(actual.field1.value).toBe(expected.field1.value);
-    });
-    it('should update record for update key', async () => {
-      // Given
-      const record: TestRecord = {
-        id: { value: '1' },
-        field1: { value: 'test' },
-      };
-      const { id } = await underlying.record.addRecord({ app: APP_ID, record });
-      // When
-      const expected: TestRecord = {
-        id: { value: '1' },
-        field1: { value: 'updated' },
-      };
-      await client.updateRecord<TestRecord>({
-        app: APP_ID,
-        updateKey: { field: 'id', value: '1' },
-        record: expected,
-      })();
-      // Then
-      const { record: actual } = await underlying.record.getRecord<TestRecord>({ app: APP_ID, id });
-      expect(actual.field1.value).toBe(expected.field1.value);
-    });
-    it('should throw error when no record found for id', async () => {
-      // Given
-      const record: TestRecord = {
-        id: { value: '9999' },
-        field1: { value: 'test' },
-      };
-      // When
-      const result = client.updateRecord({
-        app: APP_ID,
-        id: '9999',
-        record,
-      })();
-      // Then
-      await expect(result).rejects.toThrowError();
-    });
-    it('should throw error when no record found for update key', async () => {
-      // Given
-      const record: TestRecord = {
-        id: { value: '9999' },
-        field1: { value: 'test' },
-      };
-      // When
-      const result = client.updateRecord<TestRecord>({
-        app: APP_ID,
-        updateKey: { field: 'id', value: '9999' },
-        record,
-      })();
-      // Then
-      await expect(result).rejects.toThrowError();
-    });
-    it('should throw error when revision numbers do not match', async () => {
-      // Given
-      const record: TestRecord = {
-        id: { value: '1' },
-        field1: { value: 'test' },
-      };
-      await underlying.record.addRecord({ app: APP_ID, record });
-      // When
-      const expected: TestRecord = {
-        id: { value: '1' },
-        field1: { value: 'updated' },
-      };
-      const result = client.updateRecord<TestRecord>({
-        app: APP_ID,
-        updateKey: { field: 'id', value: '1' },
-        record: expected,
-        revision: '9999',
-      })();
-      // Then
-      await expect(result).rejects.toThrowError();
-    });
-  });
-
   describe('getRecords', () => {
     it('should return records with selected fields only', async () => {
       // Given
@@ -251,6 +144,160 @@ describe('KintoneClientImpl', () => {
       })();
       // Then
       expect(totalCount).toEqual(O.some(3));
+    });
+  });
+
+  describe('addRecord', () => {
+    it('should add new record', async () => {
+      // Given
+      const expected: TestRecord = {
+        id: { value: '1' },
+        field1: { value: 'test' },
+      };
+      // When
+      const { id } = await client.addRecord({ app: APP_ID, record: expected })();
+      // Then
+      const { record } = await underlying.record.getRecord<TestRecord>({ app: APP_ID, id });
+      expect(record.field1.value).toBe(expected.field1.value);
+    });
+  });
+
+  describe('updateRecord', () => {
+    it('should update record for id', async () => {
+      // Given
+      const record: TestRecord = {
+        id: { value: '1' },
+        field1: { value: 'test' },
+      };
+      const { id } = await underlying.record.addRecord({ app: APP_ID, record });
+      // When
+      const expected: TestRecord = {
+        id: { value: '1' },
+        field1: { value: 'updated' },
+      };
+      await client.updateRecord({ app: APP_ID, id, record: expected })();
+      // Then
+      const { record: actual } = await underlying.record.getRecord<TestRecord>({ app: APP_ID, id });
+      expect(actual.field1.value).toBe(expected.field1.value);
+    });
+    it('should update record for update key', async () => {
+      // Given
+      const record: TestRecord = {
+        id: { value: '1' },
+        field1: { value: 'test' },
+      };
+      const { id } = await underlying.record.addRecord({ app: APP_ID, record });
+      // When
+      const expected: TestRecord = {
+        id: { value: '1' },
+        field1: { value: 'updated' },
+      };
+      await client.updateRecord<TestRecord>({
+        app: APP_ID,
+        updateKey: { field: 'id', value: '1' },
+        record: expected,
+      })();
+      // Then
+      const { record: actual } = await underlying.record.getRecord<TestRecord>({ app: APP_ID, id });
+      expect(actual.field1.value).toBe(expected.field1.value);
+    });
+    it('should throw error when no record found for id', async () => {
+      // Given
+      const record: TestRecord = {
+        id: { value: '9999' },
+        field1: { value: 'test' },
+      };
+      // When
+      const result = client.updateRecord({
+        app: APP_ID,
+        id: '9999',
+        record,
+      })();
+      // Then
+      await expect(result).rejects.toThrowError();
+    });
+    it('should throw error when no record found for update key', async () => {
+      // Given
+      const record: TestRecord = {
+        id: { value: '9999' },
+        field1: { value: 'test' },
+      };
+      // When
+      const result = client.updateRecord<TestRecord>({
+        app: APP_ID,
+        updateKey: { field: 'id', value: '9999' },
+        record,
+      })();
+      // Then
+      await expect(result).rejects.toThrowError();
+    });
+    it('should throw error when revisions do not match', async () => {
+      // Given
+      const record: TestRecord = {
+        id: { value: '1' },
+        field1: { value: 'test' },
+      };
+      await underlying.record.addRecord({ app: APP_ID, record });
+      // When
+      const expected: TestRecord = {
+        id: { value: '1' },
+        field1: { value: 'updated' },
+      };
+      const result = client.updateRecord<TestRecord>({
+        app: APP_ID,
+        updateKey: { field: 'id', value: '1' },
+        record: expected,
+        revision: '9999',
+      })();
+      // Then
+      await expect(result).rejects.toThrowError();
+    });
+  });
+
+  describe('deleteRecords', () => {
+    it('should delete records for ids', async () => {
+      // Given
+      const record: TestRecord = {
+        id: { value: '1' },
+        field1: { value: 'test' },
+      };
+      const { id } = await underlying.record.addRecord({ app: APP_ID, record });
+      // When
+      await client.deleteRecords({ app: APP_ID, records: [{ id }] })();
+      // Then
+      const none = await client.getRecordOpt({ app: APP_ID, id })();
+      expect(none).toBe(O.none);
+    });
+    it('should delete records for ids and revisions', async () => {
+      // Given
+      const record: TestRecord = {
+        id: { value: '1' },
+        field1: { value: 'test' },
+      };
+      const { id, revision } = await underlying.record.addRecord({ app: APP_ID, record });
+      // When
+      await client.deleteRecords({ app: APP_ID, records: [{ id, revision }] })();
+      // Then
+      const none = await client.getRecordOpt({ app: APP_ID, id })();
+      expect(none).toBe(O.none);
+    });
+    it('should throw error when no record found for id', async () => {
+      // When
+      const result = client.deleteRecords({ app: APP_ID, records: [{ id: '9999' }] })();
+      // Then
+      await expect(result).rejects.toThrowError();
+    });
+    it('should throw error when revisions do not match', async () => {
+      // Given
+      const record: TestRecord = {
+        id: { value: '1' },
+        field1: { value: 'test' },
+      };
+      const { id } = await underlying.record.addRecord({ app: APP_ID, record });
+      // When
+      const result = client.deleteRecords({ app: APP_ID, records: [{ id, revision: '9999' }] })();
+      // Then
+      await expect(result).rejects.toThrowError();
     });
   });
 });

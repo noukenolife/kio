@@ -10,20 +10,6 @@ export type KintoneClient = {
     app: AppID,
     id: ID
   }) => TO.TaskOption<R>
-  addRecord: <R extends Record>(args: {
-    app: AppID,
-    record: R
-  }) => T.Task<{ id: ID, revision: Revision }>
-  updateRecord: <R extends Record>(args: {
-    app: AppID
-    record: R
-    id?: ID
-    updateKey?: {
-      field: keyof R
-      value: ID
-    }
-    revision?: Revision
-  }) => T.Task<{ revision: Revision }>
   getRecords<R extends Record>(args: {
     app: AppID;
     query?: string;
@@ -50,4 +36,22 @@ export type KintoneClient = {
     records: Partial<R>[],
     totalCount: O.Option<number>
   }>
+  addRecord: <R extends Record>(args: {
+    app: AppID,
+    record: R
+  }) => T.Task<{ id: ID, revision: Revision }>
+  updateRecord: <R extends Record>(args: {
+    app: AppID
+    record: R
+    id?: ID
+    updateKey?: {
+      field: keyof R
+      value: ID
+    }
+    revision?: Revision
+  }) => T.Task<{ revision: Revision }>
+  deleteRecords: (args: {
+    app: AppID
+    records: { id: ID, revision?: Revision }[]
+  }) => T.Task<void>
 };

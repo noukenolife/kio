@@ -149,7 +149,7 @@ export class KIO<S extends {}> {
     return new KIO(kio, this.autoCommitInterpreter);
   }
 
-  async autoCommit<A>(result: (s: S) => A): Promise<A> {
+  async commit<A>(result: (s: S) => A): Promise<A> {
     const kio = Do(FR.free)
       .bind('state', this.kio)
       .return(({ state }) => result(state));

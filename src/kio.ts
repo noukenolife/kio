@@ -138,6 +138,17 @@ export class KIO<S extends {}> {
     return new KIO(kio, this.autoCommitInterpreter);
   }
 
+  deleteRecords(args: {
+    app: AppID,
+    records: { id: ID, revision?: Revision }[],
+  }): KIO<S> {
+    const kio = Do(FR.free)
+      .bind('state', this.kio)
+      .bind('result', K.deleteRecords(args))
+      .return(({ state }) => state);
+    return new KIO(kio, this.autoCommitInterpreter);
+  }
+
   async autoCommit<A>(result: (s: S) => A): Promise<A> {
     const kio = Do(FR.free)
       .bind('state', this.kio)

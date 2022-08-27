@@ -26,6 +26,9 @@ export class AutoCommitInterpreterImpl implements AutoCommitInterpreter {
       case 'UpdateRecord': return Do(T.Monad)
         .bind('result', this.client.updateRecord(kioa))
         .return(({ result }) => kioa.f(O.some(result)));
+      case 'DeleteRecords': return Do(T.Monad)
+        .bind('result', this.client.deleteRecords(kioa))
+        .return(() => kioa.f());
       default: throw Error('Unknown operation.');
     }
   };

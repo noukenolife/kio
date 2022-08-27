@@ -120,11 +120,36 @@ export class UpdateRecord<A, R extends Record = Record> {
   }
 }
 
+export class DeleteRecords<A> {
+  readonly _tag: 'DeleteRecords' = 'DeleteRecords';
+
+  readonly _A!: A;
+
+  readonly _URI!: URI;
+
+  readonly app: AppID;
+
+  readonly records: { id: ID, revision?: Revision }[];
+
+  readonly f: () => A;
+
+  constructor(args: {
+    app: AppID,
+    records: { id: ID, revision?: Revision }[],
+    f: () => A,
+  }) {
+    this.app = args.app;
+    this.records = args.records;
+    this.f = args.f;
+  }
+}
+
 export type KIOA<A> =
   | GetRecordOpt<A>
   | GetRecords<A>
   | AddRecord<A>
-  | UpdateRecord<A>;
+  | UpdateRecord<A>
+  | DeleteRecords<A>;
 
 declare module 'fp-ts/HKT' {
   interface URItoKind<A> {
@@ -190,3 +215,8 @@ export const updateRecordByUpdateKey = <R extends Record>(args: {
 }) => FR.liftF(
     new UpdateRecord<O.Option<{ revision: Revision }>, R>({ ...args, f: (a) => a }),
   );
+
+export const deleteRecords = (args: {
+  app: AppID,
+  records: { id: ID, revision?: Revision }[],
+}) => FR.liftF(new DeleteRecords<void>({ ...args, f: () => undefined }));

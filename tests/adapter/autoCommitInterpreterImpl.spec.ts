@@ -3,11 +3,11 @@ import * as T from 'fp-ts/Task';
 import * as TO from 'fp-ts/TaskOption';
 import * as O from 'fp-ts/Option';
 import {
-  anything, instance, mock, when,
+  anything, capture, instance, mock, when,
 } from 'ts-mockito';
 import { AutoCommitInterpreterImpl } from '../../src/adapter/autoCommitInterpreterImpl';
 import {
-  addRecord, getRecordOpt, getRecords, updateRecordById,
+  addRecord, deleteRecords, getRecordOpt, getRecords, updateRecordById,
 } from '../../src/kioa';
 import { Record } from '../../src/core';
 import { KintoneClient } from '../../src/client/kintoneClient';
@@ -77,6 +77,19 @@ describe('AutoCommitInterpreterImpl', () => {
       const result = FR.foldFree(T.Monad)(interpreter.translate, kio)();
       // Then
       await expect(result).resolves.toEqual(O.some({ revision: '1' }));
+    });
+    it('should translate DeleteRecords to Task', async () => {
+      // Given
+      const client = mock<KintoneClient>();
+      when(client.deleteRecords(anything())).thenReturn(T.of(undefined));
+      const interpreter = new AutoCommitInterpreterImpl(instance(client));
+      // When
+      const kio = deleteRecords({ app: '1', records: [{ id: '1', revision: '1' }] });
+      await FR.foldFree(T.Monad)(interpreter.translate, kio)();
+      // Then
+      const [args] = capture(client.deleteRecords).last();
+      expect(args.app).toBe('1');
+      expect(args.records).toEqual([{ id: '1', revision: '1' }]);
     });
   });
 });

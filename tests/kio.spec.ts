@@ -25,6 +25,7 @@ describe('KIO', () => {
       .getRecordOpt({ tag: 'record2', app: '2', id: '1' })
       .getRecordOpt({ tag: 'record3', app: '2', id: '9999' })
       .getRecords({ tag: 'records', app: '2' })
+      .deleteRecords({ app: '2', records: [{ id: '1' }] })
       .autoCommit(({ records }) => records);
     console.log(result);
   });

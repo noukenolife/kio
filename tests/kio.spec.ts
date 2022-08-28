@@ -21,10 +21,10 @@ describe('KIO', () => {
 
     const result = await KIO
       .instance(autoCommitInterpreter)
-      .addRecord({ tag: 'record1', app: '2', record })
-      .getRecordOpt({ tag: 'record2', app: '2', id: '1' })
-      .getRecordOpt({ tag: 'record3', app: '2', id: '9999' })
-      .getRecords({ tag: 'records', app: '2' })
+      .addRecord('record1', { app: '2', record })
+      .getRecordOpt('record2', { app: '2', id: '1' })
+      .getRecordOpt('record3', { app: '2', id: '9999' })
+      .getRecords('records', { app: '2' })
       .deleteRecords({ app: '2', records: [{ id: '1' }] })
       .commit(({ records }) => records);
     console.log(result);

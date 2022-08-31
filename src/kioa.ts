@@ -1,5 +1,6 @@
 import * as FR from 'fp-ts-contrib/Free';
 import * as O from 'fp-ts/Option';
+import * as T from 'fp-ts/Task';
 import {
   AppID, ID, Record, Revision,
 } from './core';
@@ -7,6 +8,22 @@ import {
 export const URI = 'KIOA';
 
 export type URI = typeof URI;
+
+export class Async<A> {
+  readonly _tag: 'Async' = 'Async';
+
+  readonly _A!: A;
+
+  readonly _URI!: URI;
+
+  readonly a: T.Task<A>;
+
+  constructor(args: {
+    a: T.Task<A>
+  }) {
+    this.a = args.a;
+  }
+}
 
 export class GetRecordOpt<A, R extends Record = Record> {
   readonly _tag: 'GetRecordOpt' = 'GetRecordOpt';
@@ -145,6 +162,7 @@ export class DeleteRecords<A> {
 }
 
 export type KIOA<A> =
+  | Async<A>
   | GetRecordOpt<A>
   | GetRecords<A>
   | AddRecord<A>
@@ -156,6 +174,10 @@ declare module 'fp-ts/HKT' {
     [URI]: KIOA<A>
   }
 }
+
+export const async = <A>(args: {
+  a: T.Task<A>
+}) => FR.liftF(new Async<A>(args));
 
 export const getRecordOpt = <R extends Record>(args: {
   app: AppID,

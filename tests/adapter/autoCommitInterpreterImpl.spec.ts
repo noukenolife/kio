@@ -7,7 +7,7 @@ import {
 } from 'ts-mockito';
 import { AutoCommitInterpreterImpl } from '../../src/adapter/autoCommitInterpreterImpl';
 import {
-  addRecord, deleteRecords, getRecordOpt, getRecords, updateRecordById,
+  addRecord, async, deleteRecords, getRecordOpt, getRecords, updateRecordById,
 } from '../../src/kioa';
 import { Record } from '../../src/core';
 import { KintoneClient } from '../../src/client/kintoneClient';
@@ -18,6 +18,16 @@ describe('AutoCommitInterpreterImpl', () => {
   };
 
   describe('translate', () => {
+    it('should translate Async to Task', async () => {
+      // Given
+      const client = mock<KintoneClient>();
+      const interpreter = new AutoCommitInterpreterImpl(instance(client));
+      // When
+      const kio = async({ a: async () => 1 });
+      const result = FR.foldFree(T.Monad)(interpreter.translate, kio)();
+      // Then
+      await expect(result).resolves.toEqual(1);
+    });
     it('should translate GetRecordOpt to Task', async () => {
       // Given
       const record: TestRecord = {

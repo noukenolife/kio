@@ -14,6 +14,7 @@ export class AutoCommitInterpreterImpl implements AutoCommitInterpreter {
 
   readonly translate = <A>(kioa: KIOA<A>): T.Task<A> => {
     switch (kioa._tag) {
+      case 'Async': return kioa.a;
       case 'GetRecordOpt': return Do(T.Monad)
         .bind('recordOpt', this.client.getRecordOpt(kioa))
         .return(({ recordOpt }) => kioa.f(recordOpt));

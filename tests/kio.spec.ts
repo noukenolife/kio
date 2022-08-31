@@ -14,19 +14,24 @@ describe('KIO', () => {
   const autoCommitInterpreter = new AutoCommitInterpreterImpl(client);
 
   it.skip('test', async () => {
-    const record = {
+    type RecordType = {
+      id: { value: string },
+      field1: { value: string },
+    };
+    const record: RecordType = {
       id: { value: '9999' },
       field1: { value: 'aaaa' },
     };
 
     const result = await KIO
       .instance(autoCommitInterpreter)
-      .addRecord('record1', { app: '2', record })
-      .getRecordOpt('record2', { app: '2', id: '1' })
-      .getRecordOpt('record3', { app: '2', id: '9999' })
-      .getRecords('records', { app: '2' })
+      .addRecord('record1')<RecordType>({ app: '2', record })
+      .getRecordOpt('record2')<RecordType>({ app: '2', id: '1' })
+      .getRecordOpt('record3')<RecordType>({ app: '2', id: '9999' })
+      .getRecords('records')<RecordType>({ app: '2' })
       .deleteRecords({ app: '2', records: [{ id: '1' }] })
-      .commit(({ records }) => records);
+      .map('record1')(async () => 1)
+      .commit(({ record1 }) => record1);
     console.log(result);
   });
 });

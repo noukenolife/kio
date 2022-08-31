@@ -29,106 +29,133 @@ export class KIO<S extends {}> {
     return new KIO(FR.of({}), autoCommitInterpreter);
   }
 
-  getRecordOpt<R extends Record, T extends string = string>(tag: T, args: {
-    app: AppID,
-    id: ID,
-  }): KIO<S & KIOState<T, R>> {
-    const kio = Do(FR.free)
-      .bind('state', this.kio)
-      .bind('record', K.getRecordOpt<R>(args))
-      .return(({ state, record }) => ({
-        ...state,
-        [tag]: O.toUndefined(record),
-      }));
-    return new KIO(kio, this.autoCommitInterpreter);
+  map<T extends Extract<keyof S, string>>(tag: T): <A>(
+    f: (value: S[T]) => A | Promise<A>,
+  ) => KIO<Omit<S, T> & KIOState<T, A>> {
+    return (f) => {
+      const kio = Do(FR.free)
+        .bind('state', this.kio)
+        .bindL('newState', ({ state }) => K.async({
+          a: async () => ({
+            ...state,
+            [tag]: await f(state[tag]),
+          }),
+        }))
+        .return(({ newState }) => newState);
+      return new KIO(kio, this.autoCommitInterpreter);
+    };
   }
 
-  getRecords<R extends Record, T extends string = string>(tag: T, args: {
+  getRecordOpt<T extends string>(tag: T): <R extends Record>(args: {
+    app: AppID,
+    id: ID,
+  }) => KIO<S & KIOState<T, R | undefined>> {
+    return (args) => {
+      const kio = Do(FR.free)
+        .bind('state', this.kio)
+        .bind('record', K.getRecordOpt(args))
+        .return(({ state, record }) => ({
+          ...state,
+          [tag]: O.toUndefined(record),
+        }));
+      return new KIO(kio, this.autoCommitInterpreter);
+    };
+  }
+
+  getRecords<T extends string>(tag: T): <R extends Record>(args: {
     app: AppID,
     query?: string,
-  }): KIO<S & KIOState<T, R[]>>;
-  getRecords<R extends Record, T extends string = string>(tag: T, args: {
+  }) => KIO<S & KIOState<T, R[]>>;
+  getRecords<T extends string>(tag: T): <R extends Record>(args: {
     app: AppID,
     fields: [],
     query?: string,
-  }): KIO<S & KIOState<T, R[]>>;
-  getRecords<R extends Record, T extends string = string>(tag: T, args: {
+  }) => KIO<S & KIOState<T, R[]>>;
+  getRecords<T extends string>(tag: T): <R extends Record> (args: {
     app: AppID,
     fields?: (keyof R)[],
     query?: string,
-  }): KIO<S & KIOState<T, (R | Partial<R>)[]>> {
-    const kio = Do(FR.free)
-      .bind('state', this.kio)
-      .bind('records', K.getRecords<R>(args))
-      .return(({ state, records }) => ({
-        ...state,
-        [tag]: records,
-      }));
-    return new KIO(kio, this.autoCommitInterpreter);
+  }) => KIO<S & KIOState<T, (R | Partial<R>)[]>> {
+    return (args) => {
+      const kio = Do(FR.free)
+        .bind('state', this.kio)
+        .bind('records', K.getRecords(args))
+        .return(({ state, records }) => ({
+          ...state,
+          [tag]: records,
+        }));
+      return new KIO(kio, this.autoCommitInterpreter);
+    };
   }
 
-  addRecord<R extends Record, T extends string = string>(tag: T, args: {
+  addRecord<T extends string>(tag: T): <R extends Record>(args: {
     app: AppID,
     record: R,
-  }): KIO<S & KIOState<T, R>> {
-    const kio = Do(FR.free)
-      .bind('state', this.kio)
-      .bind('result', K.addRecord(args))
-      .return(({ state, result }) => ({
-        ...state,
-        [tag]: O.foldW(
-          () => args.record,
-          (r: { id: ID, revision: Revision }) => ({
-            ...args.record,
-            $id: { type: '__ID__', value: r.id },
-            $revision: { type: '__REVISION__', value: r.revision },
-          }),
-        )(result),
-      }));
-    return new KIO(kio, this.autoCommitInterpreter);
+  }) => KIO<S & KIOState<T, R>> {
+    return (args) => {
+      const kio = Do(FR.free)
+        .bind('state', this.kio)
+        .bind('result', K.addRecord(args))
+        .return(({ state, result }) => ({
+          ...state,
+          [tag]: O.foldW(
+            () => args.record,
+            (r: { id: ID, revision: Revision }) => ({
+              ...args.record,
+              $id: { type: '__ID__', value: r.id },
+              $revision: { type: '__REVISION__', value: r.revision },
+            }),
+          )(result),
+        }));
+      return new KIO(kio, this.autoCommitInterpreter);
+    };
   }
 
-  updateRecordById<R extends Record, T extends string = string>(tag: T, args: {
+  updateRecordById<T extends string>(tag: T): <R extends Record>(args: {
     app: AppID,
     id: ID,
     record: R,
-  }): KIO<S & KIOState<T, R>> {
-    const kio = Do(FR.free)
-      .bind('state', this.kio)
-      .bind('result', K.updateRecordById(args))
-      .return(({ state, result }) => ({
-        ...state,
-        [tag]: O.foldW(
-          () => args.record,
-          (r: { revision: Revision }) => ({
-            ...args.record,
-            $id: { type: '__ID__', value: args.id },
-            $revision: { type: '__REVISION__', value: r.revision },
-          }),
-        )(result),
-      }));
-    return new KIO(kio, this.autoCommitInterpreter);
+  }) => KIO<S & KIOState<T, R>> {
+    return (args) => {
+      const kio = Do(FR.free)
+        .bind('state', this.kio)
+        .bind('result', K.updateRecordById(args))
+        .return(({ state, result }) => ({
+          ...state,
+          [tag]: O.foldW(
+            () => args.record,
+            (r: { revision: Revision }) => ({
+              ...args.record,
+              $id: { type: '__ID__', value: args.id },
+              $revision: { type: '__REVISION__', value: r.revision },
+            }),
+          )(result),
+        }));
+      return new KIO(kio, this.autoCommitInterpreter);
+    };
   }
 
-  updateRecordByUpdateKey<R extends Record, T extends string = string>(tag: T, args: {
+  updateRecordByUpdateKey<T extends string>(tag: T): <R extends Record>(args: {
     app: AppID,
     updateKey: { field: keyof R, value: ID },
     record: R,
-  }): KIO<S & KIOState<T, R>> {
-    const kio = Do(FR.free)
-      .bind('state', this.kio)
-      .bind('result', K.updateRecordByUpdateKey(args))
-      .return(({ state, result }) => ({
-        ...state,
-        [tag]: O.foldW(
-          () => args.record,
-          (r: { revision: Revision }) => ({
-            ...args.record,
-            $revision: { type: '__REVISION__', value: r.revision },
-          }),
-        )(result),
-      }));
-    return new KIO(kio, this.autoCommitInterpreter);
+  }) => KIO<S & KIOState<T, R>> {
+    return (args) => {
+      const kio = Do(FR.free)
+        .bind('state', this.kio)
+        .bind('result', K.updateRecordByUpdateKey(args))
+        .return(({ state, result }) => ({
+          ...state,
+          [tag]: O.foldW(
+            () => args.record,
+            (r: { revision: Revision }) => ({
+              ...args.record,
+              $revision: { type: '__REVISION__', value: r.revision },
+            }),
+          )(result),
+        }));
+      return new KIO(kio, this.autoCommitInterpreter);
+    };
   }
 
   deleteRecords(args: {

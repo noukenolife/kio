@@ -1,12 +1,11 @@
 import * as FR from 'fp-ts-contrib/Free';
 import * as O from 'fp-ts/Option';
-import * as T from 'fp-ts/Task';
 import { Do } from 'fp-ts-contrib/Do';
 import {
   AppID, ID, Record, Revision,
 } from './core';
-import { AutoCommitInterpreter } from './interpreter/autoCommitInterpreter';
 import * as K from './kioa';
+import { Interpreter } from './interpreter/interpreter';
 
 export type KIOState<T extends string, A> = {
   [K in T]?: A
@@ -15,17 +14,17 @@ export type KIOState<T extends string, A> = {
 export class KIO<S extends {}> {
   private readonly kio: FR.Free<K.URI, S>;
 
-  private readonly autoCommitInterpreter: AutoCommitInterpreter;
+  private readonly autoCommitInterpreter: Interpreter;
 
   private constructor(
     kio: FR.Free<K.URI, S>,
-    autoCommitInterpreter: AutoCommitInterpreter,
+    autoCommitInterpreter: Interpreter,
   ) {
     this.kio = kio;
     this.autoCommitInterpreter = autoCommitInterpreter;
   }
 
-  static instance(autoCommitInterpreter: AutoCommitInterpreter) {
+  static instance(autoCommitInterpreter: Interpreter) {
     return new KIO(FR.of({}), autoCommitInterpreter);
   }
 
@@ -173,6 +172,6 @@ export class KIO<S extends {}> {
     const kio = Do(FR.free)
       .bind('state', this.kio)
       .return(({ state }) => result(state));
-    return FR.foldFree(T.Monad)(this.autoCommitInterpreter.translate, kio)();
+    return this.autoCommitInterpreter.translate(kio)();
   }
 }

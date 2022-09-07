@@ -7,6 +7,7 @@ import {
 } from '../core';
 import { KintoneClient } from '../client/kintoneClient';
 import { ERR_CODE_RECORD_NOT_FOUND } from '../client/kintoneClientError';
+import { KintoneWriteRequest } from '../client/kintoneRequest';
 
 export class KintoneClientImpl implements KintoneClient {
   private client: KintoneRestAPIClient;
@@ -104,5 +105,9 @@ export class KintoneClientImpl implements KintoneClient {
     records: { id: ID; revision?: Revision }[];
   }): T.Task<void> {
     return () => this.client.record.deleteAllRecords(args).then(() => {});
+  }
+
+  bulkRequest(args: { requests: KintoneWriteRequest[] }): T.Task<void> {
+    return () => this.client.bulkRequest(args).then(() => {});
   }
 }

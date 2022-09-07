@@ -9,6 +9,7 @@ export type IDField = FieldWith<'__ID__', string>;
 export type RevisionField = FieldWith<'__REVISION__', string>;
 export type Record = {
   $id?: IDField,
-  $revision?: RevisionField
-  [code: string]: any
+  $revision?: RevisionField,
+} & {
+  [code: string]: { value: any }
 };

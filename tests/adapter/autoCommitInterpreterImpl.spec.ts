@@ -1,4 +1,3 @@
-import * as FR from 'fp-ts-contrib/Free';
 import * as T from 'fp-ts/Task';
 import * as TO from 'fp-ts/TaskOption';
 import * as O from 'fp-ts/Option';
@@ -24,7 +23,7 @@ describe('AutoCommitInterpreterImpl', () => {
       const interpreter = new AutoCommitInterpreterImpl(instance(client));
       // When
       const kio = async({ a: async () => 1 });
-      const result = FR.foldFree(T.Monad)(interpreter.translate, kio)();
+      const result = interpreter.translate(kio)();
       // Then
       await expect(result).resolves.toEqual(1);
     });
@@ -38,7 +37,7 @@ describe('AutoCommitInterpreterImpl', () => {
       const interpreter = new AutoCommitInterpreterImpl(instance(client));
       // When
       const kio = getRecordOpt({ app: '1', id: '1' });
-      const result = FR.foldFree(T.Monad)(interpreter.translate, kio)();
+      const result = interpreter.translate(kio)();
       // Then
       await expect(result).resolves.toEqual(O.some(record));
     });
@@ -55,7 +54,7 @@ describe('AutoCommitInterpreterImpl', () => {
       const interpreter = new AutoCommitInterpreterImpl(instance(client));
       // When
       const kio = getRecords({ app: '1' });
-      const actual = FR.foldFree(T.Monad)(interpreter.translate, kio)();
+      const actual = interpreter.translate(kio)();
       // Then
       await expect(actual).resolves.toEqual(expected);
     });
@@ -69,7 +68,7 @@ describe('AutoCommitInterpreterImpl', () => {
       const interpreter = new AutoCommitInterpreterImpl(instance(client));
       // When
       const kio = addRecord({ app: '1', record });
-      const result = FR.foldFree(T.Monad)(interpreter.translate, kio)();
+      const result = interpreter.translate(kio)();
       // Then
       await expect(result).resolves.toEqual(O.some({ id: '1', revision: '1' }));
     });
@@ -84,7 +83,7 @@ describe('AutoCommitInterpreterImpl', () => {
       const interpreter = new AutoCommitInterpreterImpl(instance(client));
       // When
       const kio = updateRecordById({ app: '1', id: '1', record });
-      const result = FR.foldFree(T.Monad)(interpreter.translate, kio)();
+      const result = interpreter.translate(kio)();
       // Then
       await expect(result).resolves.toEqual(O.some({ revision: '1' }));
     });
@@ -95,7 +94,7 @@ describe('AutoCommitInterpreterImpl', () => {
       const interpreter = new AutoCommitInterpreterImpl(instance(client));
       // When
       const kio = deleteRecords({ app: '1', records: [{ id: '1', revision: '1' }] });
-      await FR.foldFree(T.Monad)(interpreter.translate, kio)();
+      await interpreter.translate(kio)();
       // Then
       const [args] = capture(client.deleteRecords).last();
       expect(args.app).toBe('1');

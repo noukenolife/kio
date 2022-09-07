@@ -4,6 +4,7 @@ import * as T from 'fp-ts/Task';
 import {
   AppID, ID, Record, Revision,
 } from '../core';
+import { KintoneWriteRequest } from './kintoneRequest';
 
 export type KintoneClient = {
   getRecordOpt: <R extends Record>(args: {
@@ -53,5 +54,8 @@ export type KintoneClient = {
   deleteRecords: (args: {
     app: AppID
     records: { id: ID, revision?: Revision }[]
+  }) => T.Task<void>
+  bulkRequest: (args: {
+    requests: KintoneWriteRequest[]
   }) => T.Task<void>
 };

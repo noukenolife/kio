@@ -19,8 +19,8 @@ export class KintoneClientImpl implements KintoneClient {
   getRecordOpt<R extends Record>(args: { app: AppID; id: ID }): TO.TaskOption<R> {
     return async () => {
       try {
-        const { record } = await this.client.record.getRecord<R>(args);
-        return O.some(record);
+        const { record } = await this.client.record.getRecord(args);
+        return O.some(record as R);
       } catch (e) {
         const isNotFound = e instanceof KintoneRestAPIError && e.code === ERR_CODE_RECORD_NOT_FOUND;
         if (isNotFound) {
@@ -93,9 +93,9 @@ export class KintoneClientImpl implements KintoneClient {
       ...args,
       fields: args.fields?.map((field) => field.toString()),
     };
-    return () => this.client.record.getRecords<R>(modifiedArgs)
+    return () => this.client.record.getRecords(modifiedArgs)
       .then(({ records, totalCount }) => ({
-        records,
+        records: records as R[],
         totalCount: O.map((count) => Number(count))(O.fromNullable(totalCount)),
       }));
   }

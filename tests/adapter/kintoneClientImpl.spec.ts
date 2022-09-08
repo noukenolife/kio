@@ -22,10 +22,10 @@ describe('KintoneClientImpl', () => {
 
   beforeEach(async () => {
     // Truncate app
-    const records = await underlying.record.getAllRecords<Record>({ app: APP_ID });
+    const records = await underlying.record.getAllRecords({ app: APP_ID });
     await underlying.record.deleteAllRecords({
       app: APP_ID,
-      records: records.map((record) => ({ id: record.$id!.value })),
+      records: (records as TestRecord[]).map((record) => ({ id: record.$id!.value })),
     });
   });
 
@@ -157,7 +157,7 @@ describe('KintoneClientImpl', () => {
       // When
       const { id } = await client.addRecord({ app: APP_ID, record: expected })();
       // Then
-      const { record } = await underlying.record.getRecord<TestRecord>({ app: APP_ID, id });
+      const { record } = await underlying.record.getRecord({ app: APP_ID, id });
       expect(record.field1.value).toBe(expected.field1.value);
     });
   });
@@ -177,7 +177,7 @@ describe('KintoneClientImpl', () => {
       };
       await client.updateRecord({ app: APP_ID, id, record: expected })();
       // Then
-      const { record: actual } = await underlying.record.getRecord<TestRecord>({ app: APP_ID, id });
+      const { record: actual } = await underlying.record.getRecord({ app: APP_ID, id });
       expect(actual.field1.value).toBe(expected.field1.value);
     });
     it('should update record for update key', async () => {
@@ -198,7 +198,7 @@ describe('KintoneClientImpl', () => {
         record: expected,
       })();
       // Then
-      const { record: actual } = await underlying.record.getRecord<TestRecord>({ app: APP_ID, id });
+      const { record: actual } = await underlying.record.getRecord({ app: APP_ID, id });
       expect(actual.field1.value).toBe(expected.field1.value);
     });
     it('should throw error when no record found for id', async () => {

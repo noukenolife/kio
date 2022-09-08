@@ -11,5 +11,5 @@ export type Record = {
   $id?: IDField,
   $revision?: RevisionField,
 } & {
-  [code: string]: { value: any }
+  [code: string]: { type?: string, value: any }
 };

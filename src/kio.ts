@@ -16,16 +16,20 @@ export class KIO<S extends {}> {
 
   private readonly autoCommitInterpreter: Interpreter;
 
+  private readonly transactionalCommitInterpreter: Interpreter;
+
   private constructor(
     kio: FR.Free<K.URI, S>,
     autoCommitInterpreter: Interpreter,
+    transactionalCommitInterpreter: Interpreter,
   ) {
     this.kio = kio;
     this.autoCommitInterpreter = autoCommitInterpreter;
+    this.transactionalCommitInterpreter = transactionalCommitInterpreter;
   }
 
-  static instance(autoCommitInterpreter: Interpreter) {
-    return new KIO(FR.of({}), autoCommitInterpreter);
+  static instance(autoCommitInterpreter: Interpreter, transactionalCommitInterpreter: Interpreter) {
+    return new KIO(FR.of({}), autoCommitInterpreter, transactionalCommitInterpreter);
   }
 
   map<T extends Extract<keyof S, string>>(tag: T): <A>(
@@ -41,7 +45,7 @@ export class KIO<S extends {}> {
           }),
         }))
         .return(({ newState }) => newState);
-      return new KIO(kio, this.autoCommitInterpreter);
+      return new KIO(kio, this.autoCommitInterpreter, this.transactionalCommitInterpreter);
     };
   }
 
@@ -57,7 +61,7 @@ export class KIO<S extends {}> {
           ...state,
           [tag]: O.toUndefined(record),
         }));
-      return new KIO(kio, this.autoCommitInterpreter);
+      return new KIO(kio, this.autoCommitInterpreter, this.transactionalCommitInterpreter);
     };
   }
 
@@ -83,7 +87,7 @@ export class KIO<S extends {}> {
           ...state,
           [tag]: records,
         }));
-      return new KIO(kio, this.autoCommitInterpreter);
+      return new KIO(kio, this.autoCommitInterpreter, this.transactionalCommitInterpreter);
     };
   }
 
@@ -106,7 +110,7 @@ export class KIO<S extends {}> {
             }),
           )(result),
         }));
-      return new KIO(kio, this.autoCommitInterpreter);
+      return new KIO(kio, this.autoCommitInterpreter, this.transactionalCommitInterpreter);
     };
   }
 
@@ -130,7 +134,7 @@ export class KIO<S extends {}> {
             }),
           )(result),
         }));
-      return new KIO(kio, this.autoCommitInterpreter);
+      return new KIO(kio, this.autoCommitInterpreter, this.transactionalCommitInterpreter);
     };
   }
 
@@ -153,7 +157,7 @@ export class KIO<S extends {}> {
             }),
           )(result),
         }));
-      return new KIO(kio, this.autoCommitInterpreter);
+      return new KIO(kio, this.autoCommitInterpreter, this.transactionalCommitInterpreter);
     };
   }
 
@@ -165,7 +169,7 @@ export class KIO<S extends {}> {
       .bind('state', this.kio)
       .bind('result', K.deleteRecords(args))
       .return(({ state }) => state);
-    return new KIO(kio, this.autoCommitInterpreter);
+    return new KIO(kio, this.autoCommitInterpreter, this.transactionalCommitInterpreter);
   }
 
   async commit<A>(result: (s: S) => A): Promise<A> {
@@ -173,5 +177,12 @@ export class KIO<S extends {}> {
       .bind('state', this.kio)
       .return(({ state }) => result(state));
     return this.autoCommitInterpreter.translate(kio)();
+  }
+
+  async commitTransactional<A>(result: (s: S) => A): Promise<A> {
+    const kio = Do(FR.free)
+      .bind('state', this.kio)
+      .return(({ state }) => result(state));
+    return this.transactionalCommitInterpreter.translate(kio)();
   }
 }

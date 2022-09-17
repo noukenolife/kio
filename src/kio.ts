@@ -49,6 +49,23 @@ export class KIO<S extends {}> {
     };
   }
 
+  run<T extends string>(tag: T): <A>(
+    f: (state: S) => A | Promise<A>,
+  ) => KIO<Omit<S, T> & KIOState<T, A>> {
+    return (f) => {
+      const kio = Do(FR.free)
+        .bind('state', this.kio)
+        .bindL('newState', ({ state }) => K.async({
+          a: async () => ({
+            ...state,
+            [tag]: await f(state),
+          }),
+        }))
+        .return(({ newState }) => newState);
+      return new KIO(kio, this.autoCommitInterpreter, this.transactionalCommitInterpreter);
+    };
+  }
+
   getRecordOpt<T extends string>(tag: T): <R extends Record>(args: {
     app: AppID,
     id: ID,

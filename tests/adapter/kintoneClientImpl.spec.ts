@@ -300,4 +300,51 @@ describe('KintoneClientImpl', () => {
       await expect(result).rejects.toThrowError();
     });
   });
+
+  describe('bulkRequest', () => {
+    it('should commit multiple requests', async () => {
+      // Given
+      const record1: TestRecord = {
+        id: { value: '1' },
+        field1: { value: 'test1' },
+      };
+      const record2: TestRecord = {
+        id: { value: '2' },
+        field1: { value: 'test2' },
+      };
+      const { id } = await underlying.record.addRecord({ app: APP_ID, record: record2 });
+      // When
+      await client.bulkRequest({
+        requests: [{
+          method: 'POST',
+          api: '/k/v1/record.json',
+          payload: {
+            app: APP_ID,
+            record: record1,
+          },
+        }, {
+          method: 'PUT',
+          api: '/k/v1/record.json',
+          payload: {
+            app: APP_ID,
+            updateKey: { field: 'id', value: '1' },
+            record: { ...record1, field1: { value: 'updated value' } },
+          },
+        }, {
+          method: 'DELETE',
+          api: '/k/v1/records.json',
+          payload: {
+            app: APP_ID,
+            ids: [id],
+            revisions: [-1],
+          },
+        }],
+      })();
+      // Then
+      const { records } = await underlying.record.getRecords({ app: APP_ID });
+      const [savedRecord] = records;
+      expect(records.length).toBe(1);
+      expect(savedRecord?.field1.value).toEqual('updated value');
+    });
+  });
 });

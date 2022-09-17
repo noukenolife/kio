@@ -60,7 +60,8 @@ export class KintoneClientImpl implements KintoneClient {
     };
     return () => this.client.record.updateRecord({
       app: args.app,
-      record: args.updateKey ? { ...args.record, [args.updateKey.field]: undefined } : args.record,
+      record: args.updateKey
+        ? KintoneClientImpl.removeUpdateKeyFromRecord(args.record, args.updateKey) : args.record,
       revision: args.revision,
       ...keyArgs(),
     });
@@ -108,6 +109,28 @@ export class KintoneClientImpl implements KintoneClient {
   }
 
   bulkRequest(args: { requests: KintoneWriteRequest[] }): T.Task<void> {
-    return () => this.client.bulkRequest(args).then(() => {});
+    const requests = args.requests.map((request) => {
+      if (request.method === 'PUT') {
+        const { payload } = request;
+        const record = payload.updateKey
+          ? KintoneClientImpl.removeUpdateKeyFromRecord(payload.record, payload.updateKey)
+          : payload.record;
+        return { ...request, payload: { ...payload, record } };
+      }
+      return request;
+    });
+
+    return () => this.client.bulkRequest({ requests }).then(() => {});
+  }
+
+  private static removeUpdateKeyFromRecord<R extends Record, K extends keyof R>(
+    record: R,
+    updateKey: {
+      field: K
+      value: ID
+    },
+  ): Omit<R, K> {
+    const { [updateKey.field]: omittedField, ...omittedRecord } = record;
+    return omittedRecord;
   }
 }

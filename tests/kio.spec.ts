@@ -4,6 +4,7 @@ import { KIO } from '../src/kio';
 import { KintoneClientImpl } from '../src/adapter/kintoneClientImpl';
 import { AutoCommitInterpreterImpl } from '../src/adapter/autoCommitInterpreterImpl';
 import { TransactionalCommitInterpreterImpl } from '../src/adapter/transactionalCommitInterpreterImpl';
+import { sleep } from './utils';
 
 describe('KIO', () => {
   const APP_ID = process.env.KINTONE_TEST_APP_ID ?? '';
@@ -28,25 +29,45 @@ describe('KIO', () => {
     });
   });
 
-  it.skip('test', async () => {
+  it('should reject transactional commit when somebody have already committed', async () => {
+    // Given
     type RecordType = {
       id: { value: string },
       field1: { value: string },
     };
-    const record: RecordType = {
-      id: { value: '9999' },
-      field1: { value: 'aaaa' },
+    const record1: RecordType = {
+      id: { value: '1' },
+      field1: { value: 'record1' },
     };
-
-    const result = await KIO
+    const record2: RecordType = {
+      id: { value: '2' },
+      field1: { value: 'record2' },
+    };
+    const record3: RecordType = {
+      id: { value: '3' },
+      field1: { value: 'record3' },
+    };
+    await KIO
       .instance(autoCommitInterpreter, transactionalCommitInterpreter)
-      .addRecord('record1')<RecordType>({ app: '2', record })
-      .getRecordOpt('record2')<RecordType>({ app: '2', id: '1' })
-      .getRecordOpt('record3')<RecordType>({ app: '2', id: '9999' })
-      .getRecords('records')<RecordType>({ app: '2' })
-      .deleteRecords({ app: '2', records: [{ id: '1' }] })
-      .map('record1')(async () => 1)
-      .commitTransactional(({ record1 }) => record1);
-    console.log(result);
+      .addRecord('record1')({ app: APP_ID, record: record1 })
+      .addRecord('record2')({ app: APP_ID, record: record2 })
+      .addRecord('record3')({ app: APP_ID, record: record3 })
+      .commit(() => {});
+    // When
+    const t1 = KIO
+      .instance(autoCommitInterpreter, transactionalCommitInterpreter)
+      .getRecords('records')<RecordType>({ app: APP_ID })
+      .run('sleep')(() => sleep(1000))
+      .updateRecordByUpdateKey('updateRecord3')<RecordType>({ app: APP_ID, updateKey: { field: 'id', value: '3' }, record: { ...record3, field1: { value: 'updatedByT1' } } })
+      .commitTransactional(() => {});
+    const t2 = KIO
+      .instance(autoCommitInterpreter, transactionalCommitInterpreter)
+      .getRecords('records')<RecordType>({ app: APP_ID })
+      .updateRecordByUpdateKey('updateRecord3')<RecordType>({ app: APP_ID, updateKey: { field: 'id', value: '3' }, record: { ...record3, field1: { value: 'updatedByT2' } } })
+      .commitTransactional(() => {});
+    // Then
+    const [t1Result, t2Result] = await Promise.allSettled([t1, t2]);
+    expect(t1Result.status).toBe('rejected');
+    expect(t2Result.status).toBe('fulfilled');
   });
 });

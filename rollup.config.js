@@ -4,9 +4,10 @@ import nodeResolve from '@rollup/plugin-node-resolve';
 export default {
   input: 'src/index.ts',
   output: {
-    dir: 'dist',
+    file: 'dist/index.cjs',
     format: 'cjs',
   },
+  external: ['@kintone/rest-api-client'],
   plugins: [
     typescript(),
     nodeResolve(),

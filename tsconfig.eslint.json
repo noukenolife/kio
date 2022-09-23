@@ -9,5 +9,6 @@
     "rollup.config.js",
     "src/**/*",
     "tests/**/*"
-  ]
+  ],
+  "exclude": []
 }
